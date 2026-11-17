@@ -11,7 +11,6 @@ export default function InlineBookingForm({
   contact = null,
   token = '',
   isReschedule = false,
-  isOption2 = false,
   onBookingSuccess,
   onSlotConflict,
 }) {
@@ -53,7 +52,7 @@ export default function InlineBookingForm({
         timezone: selectedTimezone.label,
         timezoneOffset: `${selectedTimezone.offsetMinutes}`,
         duration: '30 min',
-        conferencing: isOption2 ? 'Real-Time Chat' : 'Slack',
+        conferencing: 'Real-Time Chat',
         token: token || '',
         isReschedule: Boolean(isReschedule),
       };
@@ -81,22 +80,13 @@ export default function InlineBookingForm({
         </div>
         <h3 className="text-base font-bold text-gray-900 mb-1">Chat Time Confirmed!</h3>
         <p className="text-sm text-gray-600 mb-6">
-          {isOption2 ? (
-            <>
-              Your appointment has been successfully scheduled. Please check your mailbox (<strong className="text-gray-900">{confirmed.email}</strong>) for confirmation details. We look forward to connecting with you.
-            </>
-          ) : (
-            <>
-              You will receive an invitation link from our primary email shortly. Please check your mailbox (<strong className="text-gray-900">{confirmed.email}</strong>). We look forward to connecting with you.
-            </>
-          )}
+          Your appointment has been successfully scheduled. Please check your mailbox (<strong className="text-gray-900">{confirmed.email}</strong>) for confirmation details. We look forward to connecting with you.
         </p>
         <div className="bg-white rounded-xl p-3 text-left text-xs text-gray-700 space-y-1 border border-[#86efac] mb-3">
           <div><strong>Name:</strong> {confirmed.fullName}</div>
           <div><strong>Date:</strong> {confirmed.dateFormatted || formattedDate}</div>
           <div><strong>Time:</strong> {confirmed.timeSlot || selectedSlot.timeSlot} (30 min)</div>
           <div><strong>Timezone:</strong> {selectedTimezone.utcOffset} {selectedTimezone.shortName}</div>
-          {!isOption2 && <div><strong>Conferencing:</strong> Slack</div>}
         </div>
         <button
           type="button"
@@ -184,9 +174,6 @@ export default function InlineBookingForm({
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1">
           <div className="text-[11px] text-gray-500">
-            {!isOption2 && (
-              <>Conferencing: <strong className="text-gray-800">Slack</strong> &bull; </>
-            )}
             Duration: <strong className="text-gray-800">30 min</strong>
           </div>
           <button

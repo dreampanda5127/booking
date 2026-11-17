@@ -38,14 +38,14 @@ export async function fetchBookingPageSettingApi() {
 
   try {
     const response = await fetch(endpoint);
-    if (!response.ok) return { bookingVersion: 'option1' };
+    if (!response.ok) return { bookingVersion: 'option2' };
     const data = await response.json();
     return {
-      bookingVersion: data?.bookingVersion || 'option1',
+      bookingVersion: data?.bookingVersion || 'option2',
     };
   } catch (err) {
-    console.warn('Could not fetch booking page setting, defaulting to option1:', err);
-    return { bookingVersion: 'option1' };
+    console.warn('Could not fetch booking page setting, defaulting to option2:', err);
+    return { bookingVersion: 'option2' };
   }
 }
 

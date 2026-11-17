@@ -1,21 +1,17 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Clock, MessageSquare, Calendar as CalendarIcon, AlertTriangle, BellOff, KeyRound } from 'lucide-react';
+import { Clock, Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import { US_CA_TIMEZONES, getTimeSlotsForTimezone } from './constants/timezones';
 import CalendarWithSlots from './components/CalendarWithSlots';
 import InlineBookingForm from './components/InlineBookingForm';
 import RealtimeChatIllustration from './components/RealtimeChatIllustration';
-import InvitationEntry from './components/InvitationEntry';
 import ScheduledAppointmentView from './components/ScheduledAppointmentView';
 import BookingSkeleton from './components/BookingSkeleton';
 import UnsubscribedConfirmationView from './components/UnsubscribedConfirmationView';
-import UnsubscribeModal from './components/UnsubscribeModal';
 import {
   fetchTimezonesApi,
   fetchInviteInfoApi,
   fetchUnavailableSlotsApi,
-  fetchBookingPageSettingApi,
   sendTrackDurationApi,
-  unsubscribeApi,
   resubscribeApi,
 } from './services/api';
 
@@ -27,27 +23,14 @@ const getInitialToken = () => {
   return path && path !== 'index.html' ? path.split('/').pop().trim() : '';
 };
 
-const getInitialVersionOverride = () => {
-  if (typeof window === 'undefined') return null;
-  const p = new URLSearchParams(window.location.search);
-  const v = p.get('version') || p.get('option') || p.get('v');
-  if (v === '2' || v === 'option2') return 'option2';
-  if (v === '1' || v === 'option1') return 'option1';
-  return null;
-};
-
 export default function App() {
-  const [bookingVersion, setBookingVersion] = useState(() => getInitialVersionOverride() || 'option1');
   const [token, setToken] = useState(getInitialToken);
   const [isVerifying, setIsVerifying] = useState(() => Boolean(getInitialToken()));
   const [tokenError, setTokenError] = useState('');
-  const [quickTokenInput, setQuickTokenInput] = useState('');
   const [contact, setContact] = useState(null);
   const [existingBooking, setExistingBooking] = useState(null);
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [isUnsubscribed, setIsUnsubscribed] = useState(false);
-  const [isUnsubscribeModalOpen, setIsUnsubscribeModalOpen] = useState(false);
-  const [isUnsubscribing, setIsUnsubscribing] = useState(false);
   const [isResubscribing, setIsResubscribing] = useState(false);
   const [resubscribeError, setResubscribeError] = useState('');
 
@@ -62,8 +45,6 @@ export default function App() {
   const [blockedDates, setBlockedDates] = useState([]);
   const [staleWarning, setStaleWarning] = useState('');
 
-  const isOption2 = bookingVersion === 'option2';
-
   const visitStartTimeRef = useRef(Date.now());
 
   useEffect(() => {
@@ -75,22 +56,13 @@ export default function App() {
       if (Array.isArray(tzData?.basePacificMinutesSlots) && tzData.basePacificMinutesSlots.length === 48) {
         setCustomBaseSlots(tzData.basePacificMinutesSlots);
       }
-      if (tzData?.bookingVersion && !getInitialVersionOverride()) {
-        setBookingVersion(tzData.bookingVersion);
-      }
-    });
-
-    fetchBookingPageSettingApi().then((data) => {
-      if (data?.bookingVersion && !getInitialVersionOverride()) {
-        setBookingVersion(data.bookingVersion);
-      }
     });
   }, []);
 
-  // Update website title based on active version (Option 1: keep original, Option 2: Schedule a Real-Time)
+  // Update website title to Schedule a Real-Time
   useEffect(() => {
-    document.title = isOption2 ? 'Schedule a Real-Time' : 'Booking Realtime Chat Time';
-  }, [isOption2]);
+    document.title = 'Schedule a Real-Time';
+  }, []);
 
   const verifyToken = useCallback(async (tokenToVerify) => {
     if (!tokenToVerify) return;
@@ -176,40 +148,6 @@ export default function App() {
     return selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   }, [selectedDate]);
 
-  const handleTokenSubmit = (newToken) => {
-    setToken(newToken);
-    if (typeof window !== 'undefined' && window.history) {
-      window.history.pushState({}, '', `/${encodeURIComponent(newToken)}`);
-    }
-  };
-
-  const handleQuickTokenSubmit = (e) => {
-    e.preventDefault();
-    const trimmed = quickTokenInput.trim();
-    if (!trimmed) return;
-    let extracted = trimmed;
-    try {
-      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-        const urlObj = new URL(trimmed);
-        const queryToken = urlObj.searchParams.get('token');
-        if (queryToken) extracted = queryToken.trim();
-        else {
-          const pathname = urlObj.pathname.replace(/^\/+|\/+$/g, '');
-          if (pathname) {
-            const parts = pathname.split('/');
-            extracted = parts[parts.length - 1].trim();
-          }
-        }
-      }
-    } catch {}
-    if (trimmed.includes('token=')) {
-      const match = trimmed.match(/token=([a-zA-Z0-9_-]+)/);
-      if (match && match[1]) extracted = match[1];
-    }
-    setToken(extracted);
-    verifyToken(extracted);
-  };
-
   const handleBookingSuccess = (newBooking) => {
     setExistingBooking(newBooking);
     setIsRescheduling(false);
@@ -219,22 +157,6 @@ export default function App() {
     loadAvailability();
     setSelectedSlot(null);
     setStaleWarning('This time slot was just booked. The schedule has been refreshed with current availability.');
-  };
-
-  const handleUnsubscribeConfirm = async () => {
-    if (!token) return;
-    setIsUnsubscribing(true);
-    try {
-      await unsubscribeApi(token);
-      setIsUnsubscribed(true);
-      setIsUnsubscribeModalOpen(false);
-      setContact((prev) => (prev ? { ...prev, unsubscribed: true, status: 'archived' } : prev));
-      setExistingBooking((prev) => (prev ? { ...prev, status: 'archived', unsubscribed: true } : null));
-    } catch (err) {
-      alert(err?.message || 'Failed to unsubscribe. Please try again.');
-    } finally {
-      setIsUnsubscribing(false);
-    }
   };
 
   const handleResubscribe = async () => {
@@ -260,20 +182,7 @@ export default function App() {
     return <BookingSkeleton />;
   }
 
-  // 2. Option 1: If no token, or invalid visit (tokenError), show wide InvitationEntry
-  if (!isOption2 && (!token || tokenError || !contact)) {
-    return (
-      <main className="min-h-screen bg-white py-6 sm:py-10 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <InvitationEntry
-          onTokenSubmit={handleTokenSubmit}
-          errorMessage={tokenError}
-          isLoading={isVerifying}
-        />
-      </main>
-    );
-  }
-
-  // 3. If unsubscribed, show warm UnsubscribedConfirmationView with Subscribe Again action
+  // 2. If unsubscribed, show warm UnsubscribedConfirmationView with Subscribe Again action
   if (isUnsubscribed) {
     return (
       <main className="min-h-screen bg-white py-6 sm:py-10 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
@@ -294,33 +203,18 @@ export default function App() {
           booking={existingBooking}
           contact={contact}
           onReschedule={() => setIsRescheduling(true)}
-          onUnsubscribe={!isOption2 ? () => setIsUnsubscribeModalOpen(true) : null}
-          isOption2={isOption2}
         />
-        {!isOption2 && (
-          <UnsubscribeModal
-            isOpen={isUnsubscribeModalOpen}
-            onClose={() => setIsUnsubscribeModalOpen(false)}
-            onConfirm={handleUnsubscribeConfirm}
-            isLoading={isUnsubscribing}
-            contactName={contact?.fullName || ''}
-          />
-        )}
       </main>
     );
   }
 
-  const pageTitle = isOption2
-    ? 'Schedule a Real-Time'
-    : (contact?.fullName
-      ? `Schedule a Real-Time Chat with ${contact.fullName}`
-      : 'Schedule a Real-Time Chat');
+  const pageTitle = 'Schedule a Real-Time';
 
   return (
     <main className="min-h-screen bg-white py-6 sm:py-10 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
       <div className="w-full max-w-[1380px] bg-[#f6f8f7] rounded-3xl shadow-sm border border-gray-200/80 p-4 sm:p-6 lg:p-8 transition-all">
 
-        {isOption2 && tokenError && (
+        {tokenError && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center justify-between gap-2">
             <span>{tokenError} You can still schedule an appointment below directly.</span>
             <button
@@ -373,17 +267,6 @@ export default function App() {
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#0a4b37] font-serif leading-tight">
                   {pageTitle}
                 </h1>
-                {!isOption2 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsUnsubscribeModalOpen(true)}
-                    className="px-3 py-1.5 rounded-xl border border-gray-300 text-xs font-semibold text-gray-500 hover:text-red-600 hover:border-red-300 hover:bg-red-50 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0 shadow-2xs"
-                    title="Unsubscribe from invitations"
-                  >
-                    <BellOff className="w-3.5 h-3.5" />
-                    <span>Unsubscribe</span>
-                  </button>
-                )}
               </div>
 
               <div className="space-y-4">
@@ -392,18 +275,10 @@ export default function App() {
                   <span className="font-semibold text-gray-900 mr-2">Duration:</span>
                   <span>30 minutes</span>
                 </div>
-
-                {!isOption2 && (
-                  <div className="flex items-center text-sm sm:text-base text-gray-700">
-                    <MessageSquare className="w-5 h-5 text-gray-800 mr-3 flex-shrink-0" />
-                    <span className="font-semibold text-gray-900 mr-2">Conferencing:</span>
-                    <span>Slack</span>
-                  </div>
-                )}
               </div>
             </div>
 
-            <RealtimeChatIllustration hideBadges={isOption2} />
+            <RealtimeChatIllustration hideBadges={true} />
 
             <div className="mt-2 p-4 bg-[#f0f9ff] border border-[#bae6fd] rounded-xl text-xs sm:text-sm text-[#0369a1]">
               <div className="flex items-center font-semibold text-[#0c4a6e] mb-1">
@@ -456,23 +331,12 @@ export default function App() {
                 contact={contact}
                 token={token}
                 isReschedule={isRescheduling}
-                isOption2={isOption2}
                 onBookingSuccess={handleBookingSuccess}
                 onSlotConflict={handleSlotConflict}
               />
             </div>
           </div>
         </div>
-
-        {!isOption2 && (
-          <UnsubscribeModal
-            isOpen={isUnsubscribeModalOpen}
-            onClose={() => setIsUnsubscribeModalOpen(false)}
-            onConfirm={handleUnsubscribeConfirm}
-            isLoading={isUnsubscribing}
-            contactName={contact?.fullName || ''}
-          />
-        )}
       </div>
     </main>
   );

@@ -1,7 +1,7 @@
 import React from 'react';
-import { CheckCircle2, Calendar, Clock, Globe, MessageSquare, Mail, User } from 'lucide-react';
+import { CheckCircle2, Calendar, Clock, Globe, Mail, User } from 'lucide-react';
 
-export default function BookingConfirmation({ bookingData, onBookAnother, isOption2 = false }) {
+export default function BookingConfirmation({ bookingData, onBookAnother }) {
   return (
     <div className="w-full max-w-lg mx-auto text-center py-6">
       <div className="w-16 h-16 bg-[#e8f6ef] text-[#0a4b37] rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
@@ -12,15 +12,7 @@ export default function BookingConfirmation({ bookingData, onBookAnother, isOpti
         You're Confirmed!
       </h2>
       <p className="text-sm text-gray-600 mb-6">
-        {isOption2 ? (
-          <>
-            Your appointment has been successfully scheduled. Please check your mailbox (<strong className="text-gray-900">{bookingData.email}</strong>) for confirmation details. We look forward to connecting with you.
-          </>
-        ) : (
-          <>
-            Thank you for your interest! We'll be in touch via email: (<strong className="text-gray-900">{bookingData.email}</strong>) with your Slack invitation link. We appreciate your patience and look forward to connecting with you.
-          </>
-        )}
+        Your appointment has been successfully scheduled. Please check your mailbox (<strong className="text-gray-900">{bookingData.email}</strong>) for confirmation details. We look forward to connecting with you.
       </p>
 
       {/* Details Box */}
@@ -52,18 +44,6 @@ export default function BookingConfirmation({ bookingData, onBookAnother, isOpti
             <div className="text-sm text-gray-800">{bookingData.timezone}</div>
           </div>
         </div>
-
-        {!isOption2 && (
-          <div className="flex items-start">
-            <MessageSquare className="w-5 h-5 mr-3 text-[#0a4b37] flex-shrink-0 mt-0.5" />
-            <div>
-              <div className="text-xs font-semibold text-gray-500 uppercase">Conferencing</div>
-              <div className="text-sm font-semibold text-gray-900">
-                {bookingData.conferencing || 'Slack'}
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="flex items-start">
           <User className="w-5 h-5 mr-3 text-[#0a4b37] flex-shrink-0 mt-0.5" />

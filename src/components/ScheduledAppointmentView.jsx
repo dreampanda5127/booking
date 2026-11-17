@@ -3,9 +3,7 @@ import {
   Calendar,
   Clock,
   Globe,
-  MessageSquare,
   User,
-  CheckCircle2,
   CalendarCheck,
   RotateCcw,
 } from 'lucide-react';
@@ -15,8 +13,6 @@ export default function ScheduledAppointmentView({
   booking,
   contact,
   onReschedule,
-  onUnsubscribe,
-  isOption2 = false,
 }) {
   return (
     <div className="w-full max-w-2xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-200/80 p-6 sm:p-10 transition-all">
@@ -27,20 +23,12 @@ export default function ScheduledAppointmentView({
         <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-[#e8f6ef] text-[#0a4b37] mb-2 uppercase tracking-wide">
           Appointment Confirmed
         </span>
-        {
-          isOption2 ? "" :
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-serif mb-2">
-              Your Real-Time Chat is Scheduled
-            </h1>
-        }
         <p className="text-sm text-gray-600">
-          {isOption2
-            ? 'Your appointment has been confirmed. Details of your scheduled session are below:'
-            : 'You will receive an invitation link from our primary email shortly. Please check your mailbox. Details of your appointment are below:'}
+          Your appointment has been confirmed. Details of your scheduled session are below:
         </p>
       </div>
 
-      <RealtimeChatIllustration hideBadges={isOption2} />
+      <RealtimeChatIllustration hideBadges={true} />
 
       {/* Reschedule Button Layout placed ABOVE details */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 bg-gray-50/90 border border-gray-200/80 rounded-2xl my-4">
@@ -87,18 +75,6 @@ export default function ScheduledAppointmentView({
           </div>
         </div>
 
-        {!isOption2 && (
-          <div className="flex items-start">
-            <MessageSquare className="w-5 h-5 mr-3 text-[#0a4b37] flex-shrink-0 mt-0.5" />
-            <div>
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Conferencing</div>
-              <div className="text-sm font-semibold text-gray-900">
-                {booking.conferencing || 'Slack'}
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="flex items-start border-t border-gray-200/60 pt-3">
           <User className="w-5 h-5 mr-3 text-[#0a4b37] flex-shrink-0 mt-0.5" />
           <div>
@@ -118,18 +94,6 @@ export default function ScheduledAppointmentView({
           </div>
         )}
       </div>
-
-      {!isOption2 && onUnsubscribe && (
-        <div className="text-center pt-2">
-          <button
-            type="button"
-            onClick={onUnsubscribe}
-            className="text-xs text-gray-400 hover:text-red-600 transition underline underline-offset-4 cursor-pointer"
-          >
-            No longer wish to receive chat invitations? Unsubscribe
-          </button>
-        </div>
-      )}
     </div>
   );
 }
