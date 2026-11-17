@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Textarea, Label, Spinner } from 'flowbite-react';
 import { Clock, Globe, CheckCircle2, RotateCcw, AlertTriangle } from 'lucide-react';
-import { createBookingApi } from '../services/api';
+import { createBookingApi, DIRECT_VISITOR_TOKEN } from '../services/api';
 
 export default function InlineBookingForm({
   selectedDate,
@@ -53,7 +53,7 @@ export default function InlineBookingForm({
         timezoneOffset: `${selectedTimezone.offsetMinutes}`,
         duration: '30 min',
         conferencing: 'Real-Time Chat',
-        token: token || '',
+        token: token || DIRECT_VISITOR_TOKEN,
         isReschedule: Boolean(isReschedule),
       };
 

@@ -13,6 +13,8 @@ import {
   fetchUnavailableSlotsApi,
   sendTrackDurationApi,
   resubscribeApi,
+  trackVisitApi,
+  DIRECT_VISITOR_TOKEN,
 } from './services/api';
 
 const getInitialToken = () => {
@@ -65,11 +67,27 @@ export default function App() {
   }, []);
 
   const verifyToken = useCallback(async (tokenToVerify) => {
-    if (!tokenToVerify) return;
+    if (!tokenToVerify) {
+      // Direct visitor without token: track IP & device via existing writer-backend API
+      try {
+        const res = await trackVisitApi(DIRECT_VISITOR_TOKEN);
+        if (res.serverTime) {
+          const sDate = new Date(res.serverTime);
+          if (!isNaN(sDate.getTime())) {
+            setToday(sDate);
+            setSelectedDate(sDate);
+          }
+        }
+      } catch (err) {
+        console.warn('Direct visit tracking notice:', err?.message);
+      }
+      return;
+    }
+
     setIsVerifying(true);
     setTokenError('');
     try {
-      const res = await fetchInviteInfoApi(tokenToVerify);
+      const res = await trackVisitApi(tokenToVerify);
       setContact(res.contact || null);
       setExistingBooking(res.existingBooking || null);
       const isUnsub = Boolean(res.contact?.unsubscribed || res.contact?.status === 'archived');
@@ -92,16 +110,16 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (token) verifyToken(token);
+    verifyToken(token);
   }, [token, verifyToken]);
 
   useEffect(() => {
-    if (!token) return;
+    const trackingToken = token || DIRECT_VISITOR_TOKEN;
     visitStartTimeRef.current = Date.now();
     const report = () => {
       const sec = Math.round((Date.now() - visitStartTimeRef.current) / 1000);
       if (sec > 0) {
-        sendTrackDurationApi(token, sec);
+        sendTrackDurationApi(trackingToken, sec);
         visitStartTimeRef.current = Date.now();
       }
     };

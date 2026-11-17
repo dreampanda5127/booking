@@ -50,6 +50,8 @@ export async function fetchBookingPageSettingApi() {
 }
 
 
+export const DIRECT_VISITOR_TOKEN = 'direct-visitor';
+
 export async function fetchInviteInfoApi(token) {
   const baseUrl = getApiBaseUrl();
   const endpoint = `${baseUrl}/bookings/invite-info?token=${encodeURIComponent(token)}`;
@@ -58,6 +60,26 @@ export async function fetchInviteInfoApi(token) {
   const data = await response.json();
 
   if (!response.ok) {
+    throw new Error(data?.message || 'Invalid or expired invitation token.');
+  }
+
+  return data;
+}
+
+export async function trackVisitApi(token = '') {
+  const effectiveToken = token && token.trim() ? token.trim() : DIRECT_VISITOR_TOKEN;
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/bookings/invite-info?token=${encodeURIComponent(effectiveToken)}`;
+
+  const response = await fetch(endpoint);
+  const data = await response.json();
+
+  if (!response.ok) {
+    if (effectiveToken !== DIRECT_VISITOR_TOKEN) {
+      try {
+        await fetch(`${baseUrl}/bookings/invite-info?token=${encodeURIComponent(DIRECT_VISITOR_TOKEN)}`);
+      } catch {}
+    }
     throw new Error(data?.message || 'Invalid or expired invitation token.');
   }
 
@@ -111,11 +133,12 @@ export async function fetchUnavailableSlotsApi(dateStr, token = '') {
 }
 
 export function sendTrackDurationApi(token, durationSeconds) {
-  if (!token || !durationSeconds || durationSeconds <= 0) return;
+  const effectiveToken = token && token.trim() ? token.trim() : DIRECT_VISITOR_TOKEN;
+  if (!effectiveToken || !durationSeconds || durationSeconds <= 0) return;
   const baseUrl = getApiBaseUrl();
   const endpoint = `${baseUrl}/bookings/track-duration`;
 
-  const payload = JSON.stringify({ token, duration: durationSeconds });
+  const payload = JSON.stringify({ token: effectiveToken, duration: durationSeconds });
 
   if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
     try {
