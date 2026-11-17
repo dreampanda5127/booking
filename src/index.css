@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #f6f8f7;
+  color: #1f2937;
+}
+
+/* Custom slim scrollbar matching the reference image */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Realtime chat illustration animations */
+@keyframes chatFloatUp {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes chatFloatDown {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(4px); }
+}
+
+@keyframes chatPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@keyframes chatJump {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-3px); }
+}
+
+.anim-chat-up {
+  animation: chatFloatUp 3.5s ease-in-out infinite;
+}
+
+.anim-chat-down {
+  animation: chatFloatDown 4s ease-in-out infinite;
+}
+
+.anim-chat-pulse {
+  animation: chatPulse 2s ease-in-out infinite;
+}
+
+.anim-chat-d1 {
+  animation: chatJump 1.4s infinite ease-in-out 0s;
+}
+
+.anim-chat-d2 {
+  animation: chatJump 1.4s infinite ease-in-out 0.2s;
+}
+
+.anim-chat-d3 {
+  animation: chatJump 1.4s infinite ease-in-out 0.4s;
+}
+
